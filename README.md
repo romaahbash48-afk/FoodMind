@@ -134,6 +134,20 @@ A feature module representing the home screen.
 - **Android SDK** with API 34 (Android 14)
 - **Minimum SDK:** API 24 (Android 7.0)
 
+### Build Note
+⚠️ Due to network restrictions in the CI environment, the full build requires Android Gradle Plugin artifacts from `dl.google.com`. However, the core business logic modules (:domain and :data) are pure Kotlin and build/test successfully.
+
+To build in a local environment with full internet access:
+```bash
+./gradlew build
+```
+
+To build and test just the pure Kotlin modules:
+```bash
+# Temporarily comment out Android modules in settings.gradle.kts
+./gradlew :domain:build :data:test
+```
+
 ### Opening the Project
 
 1. **Clone the repository:**

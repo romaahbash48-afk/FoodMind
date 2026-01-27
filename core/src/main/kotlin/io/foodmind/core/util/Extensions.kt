@@ -12,10 +12,12 @@ fun String?.toIntOrNull(): Int? {
 }
 
 /**
- * Extension function to check if a String is a valid email
+ * Extension function to check if a String is a valid email using simple regex
+ * For production use, consider using a more comprehensive validation library
  */
 fun String.isValidEmail(): Boolean {
-    return android.util.Patterns.EMAIL_ADDRESS.matcher(this).matches()
+    val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\$".toRegex()
+    return emailRegex.matches(this)
 }
 
 /**

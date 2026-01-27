@@ -1,7 +1,7 @@
 [versions]
 # Kotlin and Gradle
 kotlin = "1.9.20"
-agp = "8.1.4"
+agp = "8.0.2"
 ksp = "1.9.20-1.0.14"
 
 # AndroidX Core
