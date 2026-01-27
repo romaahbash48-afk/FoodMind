@@ -18,7 +18,7 @@ compose-compiler = "1.5.5"
 navigation-compose = "2.7.6"
 
 # Dependency Injection
-hilt = "2.50"
+hilt = "2.48"
 hilt-navigation-compose = "1.1.0"
 
 # Coroutines

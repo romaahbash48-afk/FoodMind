@@ -1,6 +1,6 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    id("com.android.library") version "8.0.2"
+    id("org.jetbrains.kotlin.android") version "1.9.20"
 }
 
 android {

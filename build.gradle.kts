@@ -1,12 +1,17 @@
 // Top-level build file for FoodMind multi-module project
 
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.20")
+    }
+}
+
 plugins {
-    alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.android.library) apply false
-    alias(libs.plugins.kotlin.android) apply false
-    alias(libs.plugins.kotlin.jvm) apply false
-    alias(libs.plugins.hilt) apply false
-    alias(libs.plugins.kotlin.kapt) apply false
+    id("org.jetbrains.kotlin.jvm") version "1.9.20" apply false
 }
 
 tasks.register("clean", Delete::class) {

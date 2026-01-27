@@ -1,8 +1,8 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.hilt)
-    alias(libs.plugins.kotlin.kapt)
+    id("com.android.application") version "8.0.2"
+    id("org.jetbrains.kotlin.android") version "1.9.20"
+    id("com.google.dagger.hilt.android") version "2.48"
+    id("org.jetbrains.kotlin.kapt") version "1.9.20"
 }
 
 android {
@@ -46,7 +46,7 @@ android {
     }
     
     composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
+        kotlinCompilerExtensionVersion = "1.5.5"
     }
     
     packaging {
