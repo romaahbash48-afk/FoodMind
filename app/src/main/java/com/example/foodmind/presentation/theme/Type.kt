@@ -1,4 +1,4 @@
-package com.example.foodmind.ui.theme
+package com.example.foodmind.presentation.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

@@ -1,4 +1,4 @@
-package com.example.foodmind.ui.theme
+package com.example.foodmind.presentation.theme
 
 import android.app.Activity
 import android.os.Build
