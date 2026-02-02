@@ -14,27 +14,8 @@ import javax.inject.Singleton
 @Singleton
 class FoodLocalDataSource @Inject constructor() {
     
-    // Mock data for demonstration
-    private val mockFoodItems = listOf(
-        FoodItemDto(
-            id = "1",
-            name = "Apple",
-            description = "Fresh red apple",
-            calories = 95
-        ),
-        FoodItemDto(
-            id = "2",
-            name = "Banana",
-            description = "Ripe yellow banana",
-            calories = 105
-        ),
-        FoodItemDto(
-            id = "3",
-            name = "Chicken Breast",
-            description = "Grilled chicken breast",
-            calories = 165
-        )
-    )
+    // Large catalog of food items for demonstration
+    private val mockFoodItems = FoodCatalogData.items
     
     /**
      * Gets all food items from local storage.

@@ -8,6 +8,8 @@ data class FoodItem(
     val id: String,
     val name: String,
     val description: String,
-    val calories: Int,
+    val category: String,
+    val nutrition: NutritionInfo,
+    val tasteRating: Double,
     val imageUrl: String? = null
 )
