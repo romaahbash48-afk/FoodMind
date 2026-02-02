@@ -3,6 +3,7 @@ package com.example.foodmind.data.importer
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.example.foodmind.BuildConfig
 import dagger.hilt.android.EntryPointAccessors
 
 class CatalogImportWorker(
@@ -20,7 +21,8 @@ class CatalogImportWorker(
         entryPoint.importCoordinator().seedCatalogIfEmpty(
             countryTag = countryTag,
             regionKey = regionKey,
-            currency = currency
+            currency = currency,
+            seedMockPrices = BuildConfig.USE_MOCK_PRICES
         )
         return Result.success()
     }

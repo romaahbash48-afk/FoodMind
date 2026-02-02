@@ -34,8 +34,10 @@ android {
 
         val supabaseUrl = localProperties.getProperty("SUPABASE_URL") ?: ""
         val supabaseKey = localProperties.getProperty("SUPABASE_ANON_KEY") ?: ""
+        val useMockPrices = localProperties.getProperty("USE_MOCK_PRICES") ?: "true"
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
+        buildConfigField("boolean", "USE_MOCK_PRICES", useMockPrices)
     }
 
     buildTypes {
