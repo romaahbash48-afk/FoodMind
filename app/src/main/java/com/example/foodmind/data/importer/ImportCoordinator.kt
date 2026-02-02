@@ -1,6 +1,7 @@
 package com.example.foodmind.data.importer
 
 import com.example.foodmind.dataimport.OpenFoodFactsImporter
+import com.example.foodmind.data.remote.SupabaseSyncManager
 import com.example.foodmind.domain.model.Category
 import com.example.foodmind.domain.model.Nutrition
 import com.example.foodmind.domain.model.Product
@@ -15,6 +16,7 @@ import javax.inject.Singleton
 class ImportCoordinator @Inject constructor(
     private val importer: OpenFoodFactsImporter,
     private val productRepository: ProductRepository,
+    private val supabaseSyncManager: SupabaseSyncManager,
     @com.example.foodmind.di.IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
     suspend fun seedCatalogIfEmpty(countryTag: String? = null): ImportSummary {
@@ -28,6 +30,7 @@ class ImportCoordinator @Inject constructor(
             }
             val categoryMap = categories.associateBy { it.id }
             productRepository.upsertCategories(categories)
+            supabaseSyncManager.upsertCategories(categories)
 
             val seenIds = mutableSetOf<String>()
             var importedCount = 0
@@ -79,6 +82,8 @@ class ImportCoordinator @Inject constructor(
                 }
                 if (mapped.isNotEmpty()) {
                     productRepository.upsertProducts(mapped)
+                    supabaseSyncManager.upsertProducts(mapped)
+                    supabaseSyncManager.upsertNutrition(mapped)
                 }
             }
 

@@ -1,9 +1,19 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
     id("org.jetbrains.kotlin.kapt")
     id("com.google.dagger.hilt.android")
+}
+
+val localProperties = Properties().apply {
+    val propsFile = rootProject.file("local.properties")
+    if (propsFile.exists()) {
+        FileInputStream(propsFile).use { load(it) }
+    }
 }
 
 android {
@@ -21,6 +31,11 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        val supabaseUrl = localProperties.getProperty("SUPABASE_URL") ?: ""
+        val supabaseKey = localProperties.getProperty("SUPABASE_ANON_KEY") ?: ""
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
     }
 
     buildTypes {
@@ -41,6 +56,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {
