@@ -11,11 +11,13 @@ sealed class Screen(val route: String) {
     data object Home : Screen("home")
 
     /**
-     * Example screen - can be replaced with actual screens
+     * Food detail screen - shows full nutrition and ratings
      */
-    data object Example : Screen("example")
+    data object FoodDetail : Screen("food_detail/{foodId}") {
+        const val ARG_FOOD_ID = "foodId"
 
-    /**
-     * Add more screens as needed following this pattern
-     */
+        fun createRoute(foodId: String): String {
+            return "food_detail/$foodId"
+        }
+    }
 }

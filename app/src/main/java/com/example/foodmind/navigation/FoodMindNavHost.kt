@@ -3,9 +3,12 @@ package com.example.foodmind.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.foodmind.presentation.screens.home.HomeScreen
+import com.example.foodmind.presentation.screens.detail.FoodDetailScreen
 
 /**
  * Main navigation graph for the FoodMind app.
@@ -24,15 +27,21 @@ fun FoodMindNavHost(
     ) {
         composable(route = Screen.Home.route) {
             HomeScreen(
-                onNavigate = { destination ->
-                    navController.navigate(destination.route)
+                onFoodSelected = { foodId ->
+                    navController.navigate(Screen.FoodDetail.createRoute(foodId))
                 }
             )
         }
 
-        // Add more navigation destinations here as the app grows
-        composable(route = Screen.Example.route) {
-            // Example screen composable will go here
+        composable(
+            route = Screen.FoodDetail.route,
+            arguments = listOf(
+                navArgument(Screen.FoodDetail.ARG_FOOD_ID) { type = NavType.StringType }
+            )
+        ) {
+            FoodDetailScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }
