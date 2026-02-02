@@ -45,6 +45,8 @@ fun FoodDetailScreen(
     viewModel: FoodDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val errorMessage = state.errorMessage
+    val item = state.item
 
     Column(
         modifier = Modifier
@@ -70,14 +72,14 @@ fun FoodDetailScreen(
                     CircularProgressIndicator()
                 }
             }
-            state.errorMessage != null -> {
+            errorMessage != null -> {
                 Text(
-                    text = state.errorMessage,
+                    text = errorMessage,
                     color = MaterialTheme.colorScheme.error
                 )
             }
-            state.item != null -> {
-                FoodDetailContent(item = state.item)
+            item != null -> {
+                FoodDetailContent(item = item)
             }
         }
     }
