@@ -1,6 +1,7 @@
 package com.example.foodmind.data.importer
 
 import com.example.foodmind.dataimport.OpenFoodFactsImporter
+import com.example.foodmind.data.pricing.MockPriceSeeder
 import com.example.foodmind.data.remote.SupabaseSyncManager
 import com.example.foodmind.domain.model.Category
 import com.example.foodmind.domain.model.Nutrition
@@ -17,9 +18,15 @@ class ImportCoordinator @Inject constructor(
     private val importer: OpenFoodFactsImporter,
     private val productRepository: ProductRepository,
     private val supabaseSyncManager: SupabaseSyncManager,
+    private val mockPriceSeeder: MockPriceSeeder,
     @com.example.foodmind.di.IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
-    suspend fun seedCatalogIfEmpty(countryTag: String? = null): ImportSummary {
+    suspend fun seedCatalogIfEmpty(
+        countryTag: String? = null,
+        regionKey: String? = null,
+        currency: String? = null,
+        seedMockPrices: Boolean = true
+    ): ImportSummary {
         return withContext(ioDispatcher) {
             if (!productRepository.isCatalogEmpty()) {
                 return@withContext ImportSummary(0, 0, skipped = 0)
@@ -35,6 +42,7 @@ class ImportCoordinator @Inject constructor(
             val seenIds = mutableSetOf<String>()
             var importedCount = 0
             var skipped = 0
+            val allImported = mutableListOf<Product>()
 
             ImportSeeds.categories.forEach { seed ->
                 val products = importer.importCategory(
@@ -84,7 +92,12 @@ class ImportCoordinator @Inject constructor(
                     productRepository.upsertProducts(mapped)
                     supabaseSyncManager.upsertProducts(mapped)
                     supabaseSyncManager.upsertNutrition(mapped)
+                    allImported.addAll(mapped)
                 }
+            }
+
+            if (seedMockPrices && regionKey != null && currency != null) {
+                mockPriceSeeder.seed(allImported, regionKey, currency)
             }
 
             ImportSummary(

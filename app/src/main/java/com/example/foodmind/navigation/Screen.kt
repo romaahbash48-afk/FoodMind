@@ -11,7 +11,12 @@ sealed class Screen(val route: String) {
     data object Home : Screen("home")
 
     /**
-     * Food detail screen - shows full nutrition and ratings
+     * Region selection screen
+     */
+    data object RegionSelection : Screen("region")
+
+    /**
+     * Product detail screen - shows nutrition and prices
      */
     data object FoodDetail : Screen("food_detail/{foodId}") {
         const val ARG_FOOD_ID = "foodId"

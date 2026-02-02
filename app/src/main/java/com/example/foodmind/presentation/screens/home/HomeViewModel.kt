@@ -1,61 +1,94 @@
 package com.example.foodmind.presentation.screens.home
 
+import android.content.Context
 import androidx.lifecycle.viewModelScope
+import com.example.foodmind.data.importer.ImportScheduler
 import com.example.foodmind.di.MainDispatcher
-import com.example.foodmind.domain.model.FoodItem
-import com.example.foodmind.domain.usecase.GetFoodItemsUseCase
+import com.example.foodmind.domain.model.Category
+import com.example.foodmind.domain.model.Product
+import com.example.foodmind.domain.model.Region
+import com.example.foodmind.domain.usecase.ObserveCategoriesUseCase
+import com.example.foodmind.domain.usecase.ObserveProductsUseCase
+import com.example.foodmind.domain.usecase.ObserveRegionUseCase
 import com.example.foodmind.presentation.viewmodel.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
  * ViewModel for the catalog (Home) screen.
- * Manages search, filters, and food catalog loading.
+ * Manages search, filters, and product loading.
  */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val getFoodItemsUseCase: GetFoodItemsUseCase,
+    private val observeProductsUseCase: ObserveProductsUseCase,
+    private val observeCategoriesUseCase: ObserveCategoriesUseCase,
+    private val observeRegionUseCase: ObserveRegionUseCase,
+    @ApplicationContext private val context: Context,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher
 ) : BaseViewModel<HomeUiState, HomeUiEvent>(
     initialState = HomeUiState(),
     dispatcher = mainDispatcher
 ) {
+    private val queryFlow = MutableStateFlow("")
+    private val categoryFlow = MutableStateFlow<String?>(null)
+    private var importScheduled = false
 
     init {
-        loadFoodItems()
+        observeCategories()
+        observeProducts()
+        observeRegion()
     }
 
-    private fun loadFoodItems() {
+    private fun observeCategories() {
         viewModelScope.launch(mainDispatcher) {
-            updateState { it.copy(isLoading = true, errorMessage = null) }
-            val result = getFoodItemsUseCase()
-            result.fold(
-                onSuccess = { foodFlow ->
-                    foodFlow.collectLatest { items ->
-                        val categories = items.map { it.category }.distinct().sorted()
-                        val resolvedCategory = currentState.selectedCategory?.takeIf { it in categories }
-                        val updated = currentState.copy(
-                            isLoading = false,
-                            items = items,
-                            categories = categories,
-                            selectedCategory = resolvedCategory,
-                            errorMessage = null
-                        )
-                        updateState { applyFilters(updated) }
-                    }
-                },
-                onFailure = { error ->
-                    updateState {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = error.message ?: "Unable to load food catalog."
-                        )
-                    }
+            observeCategoriesUseCase().collectLatest { categories ->
+                val resolvedCategory = currentState.selectedCategoryId
+                    ?.takeIf { selectedId -> categories.any { it.id == selectedId } }
+                updateState {
+                    it.copy(
+                        categories = categories,
+                        selectedCategoryId = resolvedCategory
+                    )
                 }
-            )
+            }
+        }
+    }
+
+    private fun observeProducts() {
+        viewModelScope.launch(mainDispatcher) {
+            combine(queryFlow, categoryFlow) { query, categoryId ->
+                query to categoryId
+            }.flatMapLatest { (query, categoryId) ->
+                observeProductsUseCase(query, categoryId)
+            }.collectLatest { products ->
+                val loading = products.isEmpty() && currentState.region != null
+                updateState {
+                    it.copy(
+                        isLoading = loading,
+                        products = products,
+                        errorMessage = null
+                    )
+                }
+            }
+        }
+    }
+
+    private fun observeRegion() {
+        viewModelScope.launch(mainDispatcher) {
+            observeRegionUseCase().collectLatest { region ->
+                updateState { it.copy(region = region) }
+                if (region != null && !importScheduled) {
+                    importScheduled = true
+                    ImportScheduler.scheduleCatalogImport(context, region)
+                }
+            }
         }
     }
 
@@ -64,38 +97,27 @@ class HomeViewModel @Inject constructor(
      */
     fun onAction(action: HomeAction) {
         when (action) {
-            is HomeAction.OnFoodClick -> sendEvent(HomeUiEvent.NavigateToFoodDetail(action.foodId))
+            is HomeAction.OnProductClick -> sendEvent(HomeUiEvent.NavigateToProductDetail(action.productId))
             is HomeAction.OnSearchQueryChange -> updateSearchQuery(action.query)
-            is HomeAction.OnCategorySelected -> updateCategory(action.category)
+            is HomeAction.OnCategorySelected -> updateCategory(action.categoryId)
             is HomeAction.OnClearFilters -> clearFilters()
         }
     }
 
     private fun updateSearchQuery(query: String) {
-        val updated = currentState.copy(searchQuery = query)
-        updateState { applyFilters(updated) }
+        queryFlow.value = query
+        updateState { it.copy(searchQuery = query) }
     }
 
-    private fun updateCategory(category: String?) {
-        val updated = currentState.copy(selectedCategory = category)
-        updateState { applyFilters(updated) }
+    private fun updateCategory(categoryId: String?) {
+        categoryFlow.value = categoryId
+        updateState { it.copy(selectedCategoryId = categoryId) }
     }
 
     private fun clearFilters() {
-        val updated = currentState.copy(searchQuery = "", selectedCategory = null)
-        updateState { applyFilters(updated) }
-    }
-
-    private fun applyFilters(state: HomeUiState): HomeUiState {
-        val query = state.searchQuery.trim().lowercase()
-        val filtered = state.items.filter { item ->
-            val matchesCategory = state.selectedCategory == null || item.category == state.selectedCategory
-            val matchesQuery = query.isEmpty() ||
-                item.name.lowercase().contains(query) ||
-                item.description.lowercase().contains(query)
-            matchesCategory && matchesQuery
-        }
-        return state.copy(filteredItems = filtered)
+        queryFlow.value = ""
+        categoryFlow.value = null
+        updateState { it.copy(searchQuery = "", selectedCategoryId = null) }
     }
 }
 
@@ -104,11 +126,11 @@ class HomeViewModel @Inject constructor(
  */
 data class HomeUiState(
     val isLoading: Boolean = true,
-    val items: List<FoodItem> = emptyList(),
-    val filteredItems: List<FoodItem> = emptyList(),
-    val categories: List<String> = emptyList(),
-    val selectedCategory: String? = null,
+    val products: List<Product> = emptyList(),
+    val categories: List<Category> = emptyList(),
+    val selectedCategoryId: String? = null,
     val searchQuery: String = "",
+    val region: Region? = null,
     val errorMessage: String? = null
 )
 
@@ -116,15 +138,15 @@ data class HomeUiState(
  * Represents one-time events that should trigger UI actions
  */
 sealed class HomeUiEvent {
-    data class NavigateToFoodDetail(val foodId: String) : HomeUiEvent()
+    data class NavigateToProductDetail(val productId: String) : HomeUiEvent()
 }
 
 /**
  * Represents user actions on the Home screen
  */
 sealed class HomeAction {
-    data class OnFoodClick(val foodId: String) : HomeAction()
+    data class OnProductClick(val productId: String) : HomeAction()
     data class OnSearchQueryChange(val query: String) : HomeAction()
-    data class OnCategorySelected(val category: String?) : HomeAction()
+    data class OnCategorySelected(val categoryId: String?) : HomeAction()
     data object OnClearFilters : HomeAction()
 }

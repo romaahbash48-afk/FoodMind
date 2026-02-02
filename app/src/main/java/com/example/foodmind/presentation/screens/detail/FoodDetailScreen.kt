@@ -17,7 +17,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,7 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.foodmind.domain.model.FoodItem
+import com.example.foodmind.domain.model.PriceQuote
+import com.example.foodmind.domain.model.Product
 import java.util.Locale
 
 /**
@@ -46,7 +46,7 @@ fun FoodDetailScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val errorMessage = state.errorMessage
-    val item = state.item
+    val product = state.product
 
     Column(
         modifier = Modifier
@@ -78,15 +78,25 @@ fun FoodDetailScreen(
                     color = MaterialTheme.colorScheme.error
                 )
             }
-            item != null -> {
-                FoodDetailContent(item = item)
+            product != null -> {
+                FoodDetailContent(
+                    item = product,
+                    regionLabel = state.region?.let { region ->
+                        region.city?.let { "${region.country}, $it" } ?: region.country
+                    },
+                    priceQuote = state.priceQuote
+                )
             }
         }
     }
 }
 
 @Composable
-private fun FoodDetailContent(item: FoodItem) {
+private fun FoodDetailContent(
+    item: Product,
+    regionLabel: String?,
+    priceQuote: PriceQuote?
+) {
     val context = LocalContext.current
     val shape = RoundedCornerShape(16.dp)
     val nutrition = item.nutrition
@@ -112,14 +122,21 @@ private fun FoodDetailContent(item: FoodItem) {
         text = item.name,
         style = MaterialTheme.typography.headlineSmall
     )
+    item.brand?.let { brand ->
+        Text(
+            text = brand,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
     Text(
-        text = item.category,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary
+        text = item.category?.name ?: "Uncategorized",
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
     )
     Spacer(modifier = Modifier.height(8.dp))
     Text(
-        text = item.description,
+        text = "Barcode: ${item.barcode ?: "N/A"}",
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -131,16 +148,30 @@ private fun FoodDetailContent(item: FoodItem) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Nutrition per serving (${nutrition.servingSizeGrams} g)",
+                text = "Nutrition per 100g/ml",
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(12.dp))
-            NutritionRow(label = "Calories", value = "${nutrition.calories} kcal")
-            NutritionRow(label = "Protein", value = "${formatMacro(nutrition.proteinGrams)} g")
-            NutritionRow(label = "Carbs", value = "${formatMacro(nutrition.carbsGrams)} g")
-            NutritionRow(label = "Fat", value = "${formatMacro(nutrition.fatGrams)} g")
-            NutritionRow(label = "Fiber", value = "${formatMacro(nutrition.fiberGrams)} g")
-            NutritionRow(label = "Sugar", value = "${formatMacro(nutrition.sugarGrams)} g")
+            if (nutrition == null) {
+                Text(
+                    text = "Nutrition data not available.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                NutritionRow(label = "Calories", value = "${formatMacro(nutrition.kcal100)} kcal")
+                NutritionRow(label = "Protein", value = "${formatMacro(nutrition.protein100)} g")
+                NutritionRow(label = "Carbs", value = "${formatMacro(nutrition.carbs100)} g")
+                NutritionRow(label = "Fat", value = "${formatMacro(nutrition.fat100)} g")
+                nutrition.fiber100?.let {
+                    NutritionRow(label = "Fiber", value = "${formatMacro(it)} g")
+                }
+                nutrition.sugar100?.let {
+                    NutritionRow(label = "Sugar", value = "${formatMacro(it)} g")
+                }
+                nutrition.salt100?.let {
+                    NutritionRow(label = "Salt", value = "${formatMacro(it)} g")
+                }
+            }
         }
     }
 
@@ -151,19 +182,33 @@ private fun FoodDetailContent(item: FoodItem) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Taste rating",
+                text = "Average price",
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "${formatRating(item.tasteRating)} / 5",
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            LinearProgressIndicator(
-                progress = (item.tasteRating / 5.0).toFloat(),
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (priceQuote == null) {
+                Text(
+                    text = "No price data for ${regionLabel ?: "your region"}.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                Text(
+                    text = "${formatPrice(priceQuote)} ${priceQuote.currency}",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                if (priceQuote.isMock) {
+                    Text(
+                        text = "Price is approximate (mock).",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Text(
+                    text = "Source: ${priceQuote.source}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -195,6 +240,6 @@ private fun formatMacro(value: Double): String {
     return String.format(Locale.US, "%.1f", value)
 }
 
-private fun formatRating(value: Double): String {
-    return String.format(Locale.US, "%.1f", value)
+private fun formatPrice(quote: PriceQuote): String {
+    return String.format(Locale.US, "%.2f", quote.avgPrice)
 }

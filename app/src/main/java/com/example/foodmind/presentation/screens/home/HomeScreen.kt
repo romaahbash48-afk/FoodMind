@@ -22,6 +22,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,7 +38,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.foodmind.domain.model.FoodItem
+import com.example.foodmind.domain.model.Category
+import com.example.foodmind.domain.model.Product
 import kotlinx.coroutines.flow.collectLatest
 import java.util.Locale
 
@@ -47,7 +49,8 @@ import java.util.Locale
  */
 @Composable
 fun HomeScreen(
-    onFoodSelected: (String) -> Unit,
+    onProductSelected: (String) -> Unit,
+    onRegionSelect: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -55,21 +58,23 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
-                is HomeUiEvent.NavigateToFoodDetail -> onFoodSelected(event.foodId)
+                is HomeUiEvent.NavigateToProductDetail -> onProductSelected(event.productId)
             }
         }
     }
 
     HomeScreenContent(
         state = state,
-        onAction = viewModel::onAction
+        onAction = viewModel::onAction,
+        onRegionSelect = onRegionSelect
     )
 }
 
 @Composable
 private fun HomeScreenContent(
     state: HomeUiState,
-    onAction: (HomeAction) -> Unit
+    onAction: (HomeAction) -> Unit,
+    onRegionSelect: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -80,11 +85,22 @@ private fun HomeScreenContent(
             text = "Food Catalog",
             style = MaterialTheme.typography.headlineMedium
         )
-        Text(
-            text = "Explore nutrition facts, taste ratings, and product images.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = state.region?.let { region ->
+                    "Region: ${region.country}${region.city?.let { ", $it" } ?: ""}"
+                } ?: "Region not set",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            TextButton(onClick = onRegionSelect) {
+                Text("Change")
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -98,7 +114,7 @@ private fun HomeScreenContent(
         Spacer(modifier = Modifier.height(12.dp))
         CategoryRow(
             categories = state.categories,
-            selectedCategory = state.selectedCategory,
+            selectedCategoryId = state.selectedCategoryId,
             onCategorySelected = { onAction(HomeAction.OnCategorySelected(it)) }
         )
 
@@ -110,7 +126,15 @@ private fun HomeScreenContent(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Importing catalog from Open Food Facts...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
             state.errorMessage != null -> {
@@ -122,21 +146,21 @@ private fun HomeScreenContent(
             }
             else -> {
                 Text(
-                    text = "${state.filteredItems.size} items",
+                    text = "${state.products.size} items",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                if (state.filteredItems.isEmpty()) {
+                if (state.products.isEmpty()) {
                     Text(
                         text = "No items match your filters.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    FoodList(
-                        items = state.filteredItems,
-                        onFoodClick = { onAction(HomeAction.OnFoodClick(it)) }
+                    ProductList(
+                        items = state.products,
+                        onProductClick = { onAction(HomeAction.OnProductClick(it)) }
                     )
                 }
             }
@@ -146,49 +170,49 @@ private fun HomeScreenContent(
 
 @Composable
 private fun CategoryRow(
-    categories: List<String>,
-    selectedCategory: String?,
+    categories: List<Category>,
+    selectedCategoryId: String?,
     onCategorySelected: (String?) -> Unit
 ) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         item {
             FilterChip(
-                selected = selectedCategory == null,
+                selected = selectedCategoryId == null,
                 onClick = { onCategorySelected(null) },
                 label = { Text("All") }
             )
         }
-        items(categories) { category ->
+        items(categories, key = { it.id }) { category ->
             FilterChip(
-                selected = selectedCategory == category,
-                onClick = { onCategorySelected(category) },
-                label = { Text(category) }
+                selected = selectedCategoryId == category.id,
+                onClick = { onCategorySelected(category.id) },
+                label = { Text(category.name) }
             )
         }
     }
 }
 
 @Composable
-private fun FoodList(
-    items: List<FoodItem>,
-    onFoodClick: (String) -> Unit
+private fun ProductList(
+    items: List<Product>,
+    onProductClick: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(items, key = { it.id }) { item ->
-            FoodItemCard(
+            ProductCard(
                 item = item,
-                onClick = { onFoodClick(item.id) }
+                onClick = { onProductClick(item.id) }
             )
         }
     }
 }
 
 @Composable
-private fun FoodItemCard(
-    item: FoodItem,
+private fun ProductCard(
+    item: Product,
     onClick: () -> Unit
 ) {
     Card(
@@ -212,13 +236,15 @@ private fun FoodItemCard(
                     text = item.name,
                     style = MaterialTheme.typography.titleMedium
                 )
+                item.brand?.let { brand ->
+                    Text(
+                        text = brand,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
                 Text(
-                    text = item.category,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = item.description,
+                    text = item.category?.name ?: "Uncategorized",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
@@ -228,11 +254,6 @@ private fun FoodItemCard(
                 Text(
                     text = nutritionSummary(item),
                     style = MaterialTheme.typography.labelMedium
-                )
-                Text(
-                    text = "Taste rating: ${formatRating(item.tasteRating)} / 5",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -278,18 +299,15 @@ private fun FoodImage(
     }
 }
 
-private fun nutritionSummary(item: FoodItem): String {
-    val nutrition = item.nutrition
-    return "${nutrition.calories} kcal • " +
-        "P ${formatMacro(nutrition.proteinGrams)}g • " +
-        "C ${formatMacro(nutrition.carbsGrams)}g • " +
-        "F ${formatMacro(nutrition.fatGrams)}g"
+private fun nutritionSummary(item: Product): String {
+    val nutrition = item.nutrition ?: return "Nutrition data unavailable"
+    return "${formatMacro(nutrition.kcal100)} kcal/100g • " +
+        "P ${formatMacro(nutrition.protein100)}g • " +
+        "C ${formatMacro(nutrition.carbs100)}g • " +
+        "F ${formatMacro(nutrition.fat100)}g"
 }
 
 private fun formatMacro(value: Double): String {
     return String.format(Locale.US, "%.1f", value)
 }
 
-private fun formatRating(value: Double): String {
-    return String.format(Locale.US, "%.1f", value)
-}

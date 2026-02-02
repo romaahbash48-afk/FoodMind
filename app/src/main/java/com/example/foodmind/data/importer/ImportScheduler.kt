@@ -7,15 +7,26 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.example.foodmind.domain.model.Region
+import com.example.foodmind.util.RegionCurrencyResolver
+import com.example.foodmind.util.RegionTagResolver
 
 object ImportScheduler {
-    fun scheduleCatalogImport(context: Context, countryTag: String?) {
+    fun scheduleCatalogImport(context: Context, region: Region?) {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
+        val countryTag = region?.let { RegionTagResolver.countryTag(it.country) }
+        val currency = region?.let { RegionCurrencyResolver.currencyFor(it.country) }
         val request = OneTimeWorkRequestBuilder<CatalogImportWorker>()
             .setConstraints(constraints)
-            .setInputData(workDataOf(CatalogImportWorker.KEY_COUNTRY_TAG to countryTag))
+            .setInputData(
+                workDataOf(
+                    CatalogImportWorker.KEY_COUNTRY_TAG to countryTag,
+                    CatalogImportWorker.KEY_REGION_KEY to region?.regionKey,
+                    CatalogImportWorker.KEY_CURRENCY to currency
+                )
+            )
             .build()
         WorkManager.getInstance(context)
             .enqueueUniqueWork(

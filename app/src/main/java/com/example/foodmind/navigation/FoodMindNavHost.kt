@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.foodmind.presentation.screens.home.HomeScreen
 import com.example.foodmind.presentation.screens.detail.FoodDetailScreen
+import com.example.foodmind.presentation.screens.region.RegionSelectionScreen
 
 /**
  * Main navigation graph for the FoodMind app.
@@ -18,17 +19,30 @@ import com.example.foodmind.presentation.screens.detail.FoodDetailScreen
 fun FoodMindNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    startDestination: String = Screen.Home.route
+    startDestination: String = Screen.RegionSelection.route
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier
     ) {
+        composable(route = Screen.RegionSelection.route) {
+            RegionSelectionScreen(
+                onRegionReady = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.RegionSelection.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(route = Screen.Home.route) {
             HomeScreen(
-                onFoodSelected = { foodId ->
+                onProductSelected = { foodId ->
                     navController.navigate(Screen.FoodDetail.createRoute(foodId))
+                },
+                onRegionSelect = {
+                    navController.navigate(Screen.RegionSelection.route)
                 }
             )
         }

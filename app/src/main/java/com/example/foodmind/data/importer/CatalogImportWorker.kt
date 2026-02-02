@@ -15,12 +15,20 @@ class CatalogImportWorker(
             ImportCoordinatorEntryPoint::class.java
         )
         val countryTag = inputData.getString(KEY_COUNTRY_TAG)
-        entryPoint.importCoordinator().seedCatalogIfEmpty(countryTag)
+        val regionKey = inputData.getString(KEY_REGION_KEY)
+        val currency = inputData.getString(KEY_CURRENCY)
+        entryPoint.importCoordinator().seedCatalogIfEmpty(
+            countryTag = countryTag,
+            regionKey = regionKey,
+            currency = currency
+        )
         return Result.success()
     }
 
     companion object {
         const val KEY_COUNTRY_TAG = "countryTag"
+        const val KEY_REGION_KEY = "regionKey"
+        const val KEY_CURRENCY = "currency"
         const val WORK_NAME = "foodmind-catalog-import"
     }
 }
