@@ -1,7 +1,9 @@
 package com.example.foodmind.data.mapper
 
 import com.example.foodmind.data.model.FoodItemDto
+import com.example.foodmind.data.model.NutritionInfoDto
 import com.example.foodmind.domain.model.FoodItem
+import com.example.foodmind.domain.model.NutritionInfo
 
 /**
  * Mapper between data layer DTOs and domain models.
@@ -16,7 +18,9 @@ fun FoodItemDto.toDomain(): FoodItem {
         id = id,
         name = name,
         description = description,
-        calories = calories,
+        category = category,
+        nutrition = nutrition.toDomain(),
+        tasteRating = tasteRating,
         imageUrl = imageUrl
     )
 }
@@ -29,7 +33,9 @@ fun FoodItem.toDto(): FoodItemDto {
         id = id,
         name = name,
         description = description,
-        calories = calories,
+        category = category,
+        nutrition = nutrition.toDto(),
+        tasteRating = tasteRating,
         imageUrl = imageUrl
     )
 }
@@ -39,4 +45,34 @@ fun FoodItem.toDto(): FoodItemDto {
  */
 fun List<FoodItemDto>.toDomain(): List<FoodItem> {
     return map { it.toDomain() }
+}
+
+/**
+ * Converts nutrition DTO to domain model.
+ */
+private fun NutritionInfoDto.toDomain(): NutritionInfo {
+    return NutritionInfo(
+        calories = calories,
+        proteinGrams = proteinGrams,
+        fatGrams = fatGrams,
+        carbsGrams = carbsGrams,
+        fiberGrams = fiberGrams,
+        sugarGrams = sugarGrams,
+        servingSizeGrams = servingSizeGrams
+    )
+}
+
+/**
+ * Converts nutrition domain model to DTO.
+ */
+private fun NutritionInfo.toDto(): NutritionInfoDto {
+    return NutritionInfoDto(
+        calories = calories,
+        proteinGrams = proteinGrams,
+        fatGrams = fatGrams,
+        carbsGrams = carbsGrams,
+        fiberGrams = fiberGrams,
+        sugarGrams = sugarGrams,
+        servingSizeGrams = servingSizeGrams
+    )
 }
