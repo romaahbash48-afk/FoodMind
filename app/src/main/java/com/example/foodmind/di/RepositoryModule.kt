@@ -1,7 +1,11 @@
 package com.example.foodmind.di
 
 import com.example.foodmind.data.repository.FoodRepositoryImpl
+import com.example.foodmind.data.repository.PriceRepositoryImpl
+import com.example.foodmind.data.repository.ProductRepositoryImpl
 import com.example.foodmind.domain.repository.FoodRepository
+import com.example.foodmind.domain.repository.PriceRepository
+import com.example.foodmind.domain.repository.ProductRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -24,4 +28,16 @@ abstract class RepositoryModule {
     abstract fun bindFoodRepository(
         impl: FoodRepositoryImpl
     ): FoodRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindProductRepository(
+        impl: ProductRepositoryImpl
+    ): ProductRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPriceRepository(
+        impl: PriceRepositoryImpl
+    ): PriceRepository
 }
