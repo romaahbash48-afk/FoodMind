@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(project(":data-import"))
     
     // Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -79,6 +80,9 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     kapt(libs.room.compiler)
+
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
