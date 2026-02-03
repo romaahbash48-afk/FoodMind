@@ -4,7 +4,7 @@ import android.content.Context
 import android.location.Geocoder
 import android.location.Location
 import android.location.LocationManager
-import androidx.annotation.SuppressLint
+import android.annotation.SuppressLint
 import com.example.foodmind.di.IoDispatcher
 import com.example.foodmind.domain.model.Region
 import dagger.hilt.android.qualifiers.ApplicationContext
