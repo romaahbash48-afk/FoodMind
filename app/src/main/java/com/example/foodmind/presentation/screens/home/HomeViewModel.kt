@@ -1,6 +1,8 @@
 package com.example.foodmind.presentation.screens.home
 
 import android.content.Context
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.viewModelScope
 import com.example.foodmind.data.importer.CatalogImportWorker
 import com.example.foodmind.data.importer.ImportScheduler
@@ -23,7 +25,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import androidx.work.getWorkInfosForUniqueWorkFlow
 
 /**
  * ViewModel for the catalog (Home) screen.
@@ -43,6 +44,8 @@ class HomeViewModel @Inject constructor(
     private val queryFlow = MutableStateFlow("")
     private val categoryFlow = MutableStateFlow<String?>(null)
     private var importScheduled = false
+    private var importWorkLiveData: LiveData<List<WorkInfo>>? = null
+    private var importWorkObserver: Observer<List<WorkInfo>>? = null
 
     init {
         observeCategories()
@@ -84,27 +87,30 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun observeImportWork() {
-        viewModelScope.launch(mainDispatcher) {
-            WorkManager.getInstance(context)
-                .getWorkInfosForUniqueWorkFlow(CatalogImportWorker.WORK_NAME)
-                .collectLatest { infos ->
-                    val status = if (infos.isEmpty()) {
-                        currentState.importStatus
-                    } else {
-                        mapImportStatus(infos)
-                    }
-                    updateState {
-                        it.copy(
-                            importStatus = status,
-                            importMessage = if (status == ImportStatus.FAILED) {
-                                "Import failed. Check connection and retry."
-                            } else {
-                                null
-                            }
-                        )
-                    }
+        val liveData = WorkManager.getInstance(context)
+            .getWorkInfosForUniqueWorkLiveData(CatalogImportWorker.WORK_NAME)
+        importWorkLiveData = liveData
+        val observer = Observer<List<WorkInfo>> { infos ->
+            val status = if (infos.isEmpty()) {
+                currentState.importStatus
+            } else {
+                mapImportStatus(infos)
+            }
+            viewModelScope.launch(mainDispatcher) {
+                updateState {
+                    it.copy(
+                        importStatus = status,
+                        importMessage = if (status == ImportStatus.FAILED) {
+                            "Import failed. Check connection and retry."
+                        } else {
+                            null
+                        }
+                    )
                 }
+            }
         }
+        importWorkObserver = observer
+        liveData.observeForever(observer)
     }
 
     private fun observeRegion() {
@@ -167,6 +173,13 @@ class HomeViewModel @Inject constructor(
                 ImportStatus.SUCCEEDED
             else -> ImportStatus.IDLE
         }
+    }
+
+    override fun onCleared() {
+        importWorkObserver?.let { observer ->
+            importWorkLiveData?.removeObserver(observer)
+        }
+        super.onCleared()
     }
 }
 
