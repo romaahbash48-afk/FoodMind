@@ -134,6 +134,11 @@ private fun FoodDetailContent(
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
+    Text(
+        text = "Source: ${formatSource(item.source)}",
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
     Spacer(modifier = Modifier.height(8.dp))
     Text(
         text = "Barcode: ${item.barcode ?: "N/A"}",
@@ -188,7 +193,7 @@ private fun FoodDetailContent(
             Spacer(modifier = Modifier.height(8.dp))
             if (priceQuote == null) {
                 Text(
-                    text = "No price data for ${regionLabel ?: "your region"}.",
+                    text = "Нет данных для региона ${regionLabel ?: "выбранного"}.",
                     style = MaterialTheme.typography.bodyMedium
                 )
             } else {
@@ -242,4 +247,12 @@ private fun formatMacro(value: Double): String {
 
 private fun formatPrice(quote: PriceQuote): String {
     return String.format(Locale.US, "%.2f", quote.avgPrice)
+}
+
+private fun formatSource(source: Product.Source): String {
+    return when (source) {
+        Product.Source.OPEN_FOOD_FACTS -> "Open Food Facts"
+        Product.Source.RETAILER_FEED -> "Retailer feed"
+        Product.Source.OTHER -> "Other"
+    }
 }

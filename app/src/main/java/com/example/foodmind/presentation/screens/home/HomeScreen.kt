@@ -250,6 +250,11 @@ private fun ProductCard(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+                Text(
+                    text = "Source: ${formatSource(item.source)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = nutritionSummary(item),
@@ -309,5 +314,13 @@ private fun nutritionSummary(item: Product): String {
 
 private fun formatMacro(value: Double): String {
     return String.format(Locale.US, "%.1f", value)
+}
+
+private fun formatSource(source: Product.Source): String {
+    return when (source) {
+        Product.Source.OPEN_FOOD_FACTS -> "Open Food Facts"
+        Product.Source.RETAILER_FEED -> "Retailer feed"
+        Product.Source.OTHER -> "Other"
+    }
 }
 
