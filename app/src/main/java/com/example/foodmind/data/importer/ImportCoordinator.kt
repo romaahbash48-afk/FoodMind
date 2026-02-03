@@ -1,7 +1,6 @@
 package com.example.foodmind.data.importer
 
-import com.example.foodmind.dataimport.OpenFoodFactsImporter
-import com.example.foodmind.data.pricing.MockPriceSeeder
+import com.example.foodmind.collectors.off.OffCollector
 import com.example.foodmind.data.remote.SupabaseSyncManager
 import com.example.foodmind.domain.model.Category
 import com.example.foodmind.domain.model.Nutrition
@@ -15,17 +14,13 @@ import javax.inject.Singleton
 
 @Singleton
 class ImportCoordinator @Inject constructor(
-    private val importer: OpenFoodFactsImporter,
+    private val offCollector: OffCollector,
     private val productRepository: ProductRepository,
     private val supabaseSyncManager: SupabaseSyncManager,
-    private val mockPriceSeeder: MockPriceSeeder,
     @com.example.foodmind.di.IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
     suspend fun seedCatalogIfEmpty(
-        countryTag: String? = null,
-        regionKey: String? = null,
-        currency: String? = null,
-        seedMockPrices: Boolean = true
+        countryTag: String? = null
     ): ImportSummary {
         return withContext(ioDispatcher) {
             if (!productRepository.isCatalogEmpty()) {
@@ -45,7 +40,7 @@ class ImportCoordinator @Inject constructor(
             val allImported = mutableListOf<Product>()
 
             ImportSeeds.categories.forEach { seed ->
-                val products = importer.importCategory(
+                val products = offCollector.fetchCategory(
                     categoryTag = seed.offTag,
                     pages = DEFAULT_PAGES,
                     pageSize = DEFAULT_PAGE_SIZE,
@@ -73,6 +68,7 @@ class ImportCoordinator @Inject constructor(
                         barcode = imported.barcode,
                         imageUrl = imported.imageUrl,
                         countryTags = imported.countryTags,
+                        source = Product.Source.OPEN_FOOD_FACTS,
                         nutrition = Nutrition(
                             kcal100 = nutrition.kcal100,
                             protein100 = nutrition.protein100,
@@ -94,10 +90,6 @@ class ImportCoordinator @Inject constructor(
                     supabaseSyncManager.upsertNutrition(mapped)
                     allImported.addAll(mapped)
                 }
-            }
-
-            if (seedMockPrices && regionKey != null && currency != null) {
-                mockPriceSeeder.seed(allImported, regionKey, currency)
             }
 
             ImportSummary(

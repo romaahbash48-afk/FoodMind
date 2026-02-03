@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "FoodMind"
 include(":app")
-include(":data-import")
+include(":data-collectors")

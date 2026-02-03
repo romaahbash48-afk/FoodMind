@@ -1,15 +1,15 @@
-package com.example.foodmind.dataimport.model
+package com.example.foodmind.collectors.off
 
-data class ImportedProduct(
+data class OffProduct(
     val name: String,
     val brand: String?,
     val barcode: String?,
     val imageUrl: String?,
     val countryTags: List<String>,
-    val nutrition: ImportedNutrition?
+    val nutrition: OffNutrition?
 )
 
-data class ImportedNutrition(
+data class OffNutrition(
     val kcal100: Double,
     val protein100: Double,
     val fat100: Double,

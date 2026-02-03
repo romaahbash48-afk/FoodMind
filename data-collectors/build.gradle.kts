@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.foodmind.dataimport"
+    namespace = "com.example.foodmind.collectors"
     compileSdk = 36
 
     defaultConfig {

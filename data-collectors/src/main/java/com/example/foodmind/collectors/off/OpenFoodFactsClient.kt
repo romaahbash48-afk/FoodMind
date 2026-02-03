@@ -1,4 +1,4 @@
-package com.example.foodmind.dataimport
+package com.example.foodmind.collectors.off
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -12,7 +12,8 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 class OpenFoodFactsClient(
-    private val baseUrl: String = "https://world.openfoodfacts.org"
+    private val baseUrl: String = "https://world.openfoodfacts.org",
+    private val userAgent: String = "FoodMind/1.0 (contact: support@foodmind.app)"
 ) {
     suspend fun fetchProducts(
         categoryTag: String,
@@ -54,6 +55,8 @@ class OpenFoodFactsClient(
     private suspend fun fetch(url: String): String = withContext(Dispatchers.IO) {
         val connection = (URL(url).openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
+            setRequestProperty("User-Agent", userAgent)
+            setRequestProperty("Accept-Language", "en-US,en;q=0.9")
             connectTimeout = 15000
             readTimeout = 20000
         }

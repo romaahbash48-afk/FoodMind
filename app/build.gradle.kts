@@ -34,10 +34,8 @@ android {
 
         val supabaseUrl = localProperties.getProperty("SUPABASE_URL") ?: ""
         val supabaseKey = localProperties.getProperty("SUPABASE_ANON_KEY") ?: ""
-        val useMockPrices = localProperties.getProperty("USE_MOCK_PRICES") ?: "true"
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
-        buildConfigField("boolean", "USE_MOCK_PRICES", useMockPrices)
     }
 
     buildTypes {
@@ -72,7 +70,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(project(":data-import"))
+    implementation(project(":data-collectors"))
     
     // Compose
     implementation(platform(libs.androidx.compose.bom))

@@ -8,7 +8,6 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.example.foodmind.domain.model.Region
-import com.example.foodmind.util.RegionCurrencyResolver
 import com.example.foodmind.util.RegionTagResolver
 
 object ImportScheduler {
@@ -17,14 +16,11 @@ object ImportScheduler {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
         val countryTag = region?.let { RegionTagResolver.countryTag(it.country) }
-        val currency = region?.let { RegionCurrencyResolver.currencyFor(it.country) }
         val request = OneTimeWorkRequestBuilder<CatalogImportWorker>()
             .setConstraints(constraints)
             .setInputData(
                 workDataOf(
-                    CatalogImportWorker.KEY_COUNTRY_TAG to countryTag,
-                    CatalogImportWorker.KEY_REGION_KEY to region?.regionKey,
-                    CatalogImportWorker.KEY_CURRENCY to currency
+                    CatalogImportWorker.KEY_COUNTRY_TAG to countryTag
                 )
             )
             .build()

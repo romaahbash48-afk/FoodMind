@@ -1,20 +1,21 @@
-package com.example.foodmind.dataimport
+package com.example.foodmind.collectors.off
 
-import com.example.foodmind.dataimport.model.ImportedNutrition
-import com.example.foodmind.dataimport.model.ImportedProduct
+import com.example.foodmind.collectors.util.RateLimiter
 import org.json.JSONObject
 
-class OpenFoodFactsImporter(
-    private val client: OpenFoodFactsClient = OpenFoodFactsClient()
+class OffCollector(
+    private val client: OpenFoodFactsClient = OpenFoodFactsClient(),
+    private val rateLimiter: RateLimiter = RateLimiter()
 ) {
-    suspend fun importCategory(
+    suspend fun fetchCategory(
         categoryTag: String,
         pages: Int,
         pageSize: Int,
         countryTag: String? = null
-    ): List<ImportedProduct> {
-        val results = mutableListOf<ImportedProduct>()
+    ): List<OffProduct> {
+        val results = mutableListOf<OffProduct>()
         for (page in 1..pages) {
+            rateLimiter.throttle()
             val products = client.fetchProducts(categoryTag, page, pageSize, countryTag)
             products.mapNotNullTo(results) { product ->
                 parseProduct(product)
@@ -23,7 +24,7 @@ class OpenFoodFactsImporter(
         return results
     }
 
-    private fun parseProduct(product: JSONObject): ImportedProduct? {
+    private fun parseProduct(product: JSONObject): OffProduct? {
         val name = product.optString("product_name")
             .ifBlank { product.optString("generic_name") }
             .trim()
@@ -52,7 +53,7 @@ class OpenFoodFactsImporter(
 
         val nutrition = parseNutrition(product.optJSONObject("nutriments"))
 
-        return ImportedProduct(
+        return OffProduct(
             name = name,
             brand = brand,
             barcode = barcode,
@@ -62,7 +63,7 @@ class OpenFoodFactsImporter(
         )
     }
 
-    private fun parseNutrition(nutriments: JSONObject?): ImportedNutrition? {
+    private fun parseNutrition(nutriments: JSONObject?): OffNutrition? {
         if (nutriments == null) return null
         val kcal = readEnergyKcal(nutriments)
         val protein = readDouble(nutriments, "proteins_100g", "proteins_100ml")
@@ -76,7 +77,7 @@ class OpenFoodFactsImporter(
             return null
         }
 
-        return ImportedNutrition(
+        return OffNutrition(
             kcal100 = kcal ?: 0.0,
             protein100 = protein ?: 0.0,
             fat100 = fat ?: 0.0,

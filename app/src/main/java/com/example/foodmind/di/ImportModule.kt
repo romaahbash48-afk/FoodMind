@@ -1,6 +1,6 @@
 package com.example.foodmind.di
 
-import com.example.foodmind.dataimport.OpenFoodFactsImporter
+import com.example.foodmind.collectors.off.OffCollector
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,7 +12,7 @@ import javax.inject.Singleton
 object ImportModule {
     @Provides
     @Singleton
-    fun provideOpenFoodFactsImporter(): OpenFoodFactsImporter {
-        return OpenFoodFactsImporter()
+    fun provideOffCollector(): OffCollector {
+        return OffCollector()
     }
 }
