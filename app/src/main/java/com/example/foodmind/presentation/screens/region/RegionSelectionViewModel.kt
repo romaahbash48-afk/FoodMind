@@ -88,7 +88,7 @@ class RegionSelectionViewModel @Inject constructor(
                 updateState {
                     it.copy(isDetecting = false, errorMessage = null, region = region)
                 }
-                ImportScheduler.scheduleCatalogImport(context, region)
+                ImportScheduler.scheduleCatalogImport(context, region, force = true)
             },
             onFailure = { error ->
                 updateState {

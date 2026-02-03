@@ -2,6 +2,7 @@ package com.example.foodmind.presentation.screens.home
 
 import android.content.Context
 import androidx.lifecycle.viewModelScope
+import com.example.foodmind.data.importer.CatalogImportWorker
 import com.example.foodmind.data.importer.ImportScheduler
 import com.example.foodmind.di.MainDispatcher
 import com.example.foodmind.domain.model.Category
@@ -20,6 +21,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.getWorkInfosForUniqueWorkFlow
 
 /**
  * ViewModel for the catalog (Home) screen.
@@ -44,6 +48,7 @@ class HomeViewModel @Inject constructor(
         observeCategories()
         observeProducts()
         observeRegion()
+        observeImportWork()
     }
 
     private fun observeCategories() {
@@ -68,15 +73,37 @@ class HomeViewModel @Inject constructor(
             }.flatMapLatest { (query, categoryId) ->
                 observeProductsUseCase(query, categoryId)
             }.collectLatest { products ->
-                val loading = products.isEmpty() && currentState.region != null
                 updateState {
                     it.copy(
-                        isLoading = loading,
                         products = products,
                         errorMessage = null
                     )
                 }
             }
+        }
+    }
+
+    private fun observeImportWork() {
+        viewModelScope.launch(mainDispatcher) {
+            WorkManager.getInstance(context)
+                .getWorkInfosForUniqueWorkFlow(CatalogImportWorker.WORK_NAME)
+                .collectLatest { infos ->
+                    val status = if (infos.isEmpty()) {
+                        currentState.importStatus
+                    } else {
+                        mapImportStatus(infos)
+                    }
+                    updateState {
+                        it.copy(
+                            importStatus = status,
+                            importMessage = if (status == ImportStatus.FAILED) {
+                                "Import failed. Check connection and retry."
+                            } else {
+                                null
+                            }
+                        )
+                    }
+                }
         }
     }
 
@@ -86,6 +113,7 @@ class HomeViewModel @Inject constructor(
                 updateState { it.copy(region = region) }
                 if (region != null && !importScheduled) {
                     importScheduled = true
+                    updateState { it.copy(importStatus = ImportStatus.RUNNING, importMessage = null) }
                     ImportScheduler.scheduleCatalogImport(context, region)
                 }
             }
@@ -101,6 +129,7 @@ class HomeViewModel @Inject constructor(
             is HomeAction.OnSearchQueryChange -> updateSearchQuery(action.query)
             is HomeAction.OnCategorySelected -> updateCategory(action.categoryId)
             is HomeAction.OnClearFilters -> clearFilters()
+            is HomeAction.OnRetryImport -> retryImport()
         }
     }
 
@@ -119,19 +148,41 @@ class HomeViewModel @Inject constructor(
         categoryFlow.value = null
         updateState { it.copy(searchQuery = "", selectedCategoryId = null) }
     }
+
+    private fun retryImport() {
+        val region = currentState.region ?: return
+        updateState { it.copy(importStatus = ImportStatus.RUNNING, importMessage = null) }
+        ImportScheduler.scheduleCatalogImport(context, region, force = true)
+    }
+
+    private fun mapImportStatus(infos: List<WorkInfo>): ImportStatus {
+        if (infos.isEmpty()) return ImportStatus.IDLE
+        val states = infos.map { it.state }
+        return when {
+            states.any { it == WorkInfo.State.RUNNING || it == WorkInfo.State.ENQUEUED || it == WorkInfo.State.BLOCKED } ->
+                ImportStatus.RUNNING
+            states.any { it == WorkInfo.State.FAILED || it == WorkInfo.State.CANCELLED } ->
+                ImportStatus.FAILED
+            states.all { it == WorkInfo.State.SUCCEEDED } ->
+                ImportStatus.SUCCEEDED
+            else -> ImportStatus.IDLE
+        }
+    }
 }
 
 /**
  * Represents the UI state of the Home screen
  */
 data class HomeUiState(
-    val isLoading: Boolean = true,
+    val isLoading: Boolean = false,
     val products: List<Product> = emptyList(),
     val categories: List<Category> = emptyList(),
     val selectedCategoryId: String? = null,
     val searchQuery: String = "",
     val region: Region? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val importStatus: ImportStatus = ImportStatus.IDLE,
+    val importMessage: String? = null
 )
 
 /**
@@ -149,4 +200,12 @@ sealed class HomeAction {
     data class OnSearchQueryChange(val query: String) : HomeAction()
     data class OnCategorySelected(val categoryId: String?) : HomeAction()
     data object OnClearFilters : HomeAction()
+    data object OnRetryImport : HomeAction()
+}
+
+enum class ImportStatus {
+    IDLE,
+    RUNNING,
+    SUCCEEDED,
+    FAILED
 }

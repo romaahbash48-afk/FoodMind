@@ -193,7 +193,7 @@ private fun FoodDetailContent(
             Spacer(modifier = Modifier.height(8.dp))
             if (priceQuote == null) {
                 Text(
-                    text = "Нет данных для региона ${regionLabel ?: "выбранного"}.",
+                    text = "No price data for ${regionLabel ?: "selected region"}.",
                     style = MaterialTheme.typography.bodyMedium
                 )
             } else {

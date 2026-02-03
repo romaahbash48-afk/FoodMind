@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -120,8 +121,11 @@ private fun HomeScreenContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        val isImporting = state.importStatus == ImportStatus.RUNNING
+        val importFailed = state.importStatus == ImportStatus.FAILED
+
         when {
-            state.isLoading -> {
+            isImporting -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -144,6 +148,17 @@ private fun HomeScreenContent(
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+            importFailed -> {
+                Text(
+                    text = state.importMessage ?: "Import failed.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(onClick = { onAction(HomeAction.OnRetryImport) }) {
+                    Text("Retry import")
+                }
+            }
             else -> {
                 Text(
                     text = "${state.products.size} items",
@@ -153,7 +168,7 @@ private fun HomeScreenContent(
                 Spacer(modifier = Modifier.height(8.dp))
                 if (state.products.isEmpty()) {
                     Text(
-                        text = "No items match your filters.",
+                        text = "No items yet. Try retrying the import.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -306,9 +321,9 @@ private fun FoodImage(
 
 private fun nutritionSummary(item: Product): String {
     val nutrition = item.nutrition ?: return "Nutrition data unavailable"
-    return "${formatMacro(nutrition.kcal100)} kcal/100g • " +
-        "P ${formatMacro(nutrition.protein100)}g • " +
-        "C ${formatMacro(nutrition.carbs100)}g • " +
+    return "${formatMacro(nutrition.kcal100)} kcal/100g | " +
+        "P ${formatMacro(nutrition.protein100)}g | " +
+        "C ${formatMacro(nutrition.carbs100)}g | " +
         "F ${formatMacro(nutrition.fat100)}g"
 }
 

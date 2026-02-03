@@ -1,7 +1,7 @@
 package com.example.foodmind.collectors.retail
 
 class AldiSuedConnector : RetailerConnector {
-    override val retailerName: String = "ALDI SÜD"
+    override val retailerName: String = "ALDI SUED"
     override val domain: String = "https://www.aldi-sued.de"
     override val decision: RetailerDecision = RetailerDecision.NEED_PARTNERSHIP
 

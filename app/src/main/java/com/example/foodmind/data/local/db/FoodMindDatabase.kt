@@ -23,7 +23,7 @@ import com.example.foodmind.data.local.entity.StoreProductMappingEntity
         StoreEntity::class,
         StoreProductMappingEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 abstract class FoodMindDatabase : RoomDatabase() {

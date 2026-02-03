@@ -55,7 +55,7 @@ Then run from Android Studio or:
 ## Import pipeline (Open Food Facts)
 On first region selection, a WorkManager job:
 1. Downloads categories (dairy, cheese, grains, meat, seafood, vegetables, fruits, drinks, snacks, bakery)
-2. Loads ~50 products per category (≈ 500 total)
+2. Loads ~50 products per category (about 500 total)
 3. Normalizes nutrition to **per 100g / 100ml**
 4. Stores to **Room**, and upserts to **Supabase** if configured
 5. Prices are fetched only from **legal feeds** (none enabled by default)
