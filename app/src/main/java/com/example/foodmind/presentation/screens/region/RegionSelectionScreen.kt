@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun RegionSelectionScreen(
@@ -38,11 +37,9 @@ fun RegionSelectionScreen(
         viewModel.onAction(RegionSelectionAction.OnPermissionResult(granted))
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.uiEvent.collectLatest { event ->
-            when (event) {
-                is RegionSelectionUiEvent.NavigateToCatalog -> onRegionReady()
-            }
+    LaunchedEffect(state.region) {
+        if (state.region != null) {
+            onRegionReady()
         }
     }
 
