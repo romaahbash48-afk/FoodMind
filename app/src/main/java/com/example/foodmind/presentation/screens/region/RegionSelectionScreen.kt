@@ -31,6 +31,7 @@ fun RegionSelectionScreen(
     viewModel: RegionSelectionViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val errorMessage = state.errorMessage
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -103,10 +104,10 @@ fun RegionSelectionScreen(
             Text("Save region")
         }
 
-        if (state.errorMessage != null) {
+        if (errorMessage != null) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = state.errorMessage,
+                text = errorMessage,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium
             )
