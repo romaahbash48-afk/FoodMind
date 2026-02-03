@@ -5,6 +5,8 @@ import androidx.room.Room
 import com.example.foodmind.data.local.dao.CategoryDao
 import com.example.foodmind.data.local.dao.PriceQuoteDao
 import com.example.foodmind.data.local.dao.ProductDao
+import com.example.foodmind.data.local.dao.StoreDao
+import com.example.foodmind.data.local.dao.StoreProductMappingDao
 import com.example.foodmind.data.local.db.FoodMindDatabase
 import dagger.Module
 import dagger.Provides
@@ -36,4 +38,12 @@ object DatabaseModule {
 
     @Provides
     fun providePriceQuoteDao(database: FoodMindDatabase): PriceQuoteDao = database.priceQuoteDao()
+
+    @Provides
+    fun provideStoreDao(database: FoodMindDatabase): StoreDao = database.storeDao()
+
+    @Provides
+    fun provideStoreProductMappingDao(
+        database: FoodMindDatabase
+    ): StoreProductMappingDao = database.storeProductMappingDao()
 }

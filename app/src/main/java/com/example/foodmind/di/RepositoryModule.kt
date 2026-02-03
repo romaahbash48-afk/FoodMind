@@ -3,9 +3,11 @@ package com.example.foodmind.di
 import com.example.foodmind.data.repository.PriceRepositoryImpl
 import com.example.foodmind.data.repository.ProductRepositoryImpl
 import com.example.foodmind.data.repository.RegionRepositoryImpl
+import com.example.foodmind.data.repository.StoreRepositoryImpl
 import com.example.foodmind.domain.repository.PriceRepository
 import com.example.foodmind.domain.repository.ProductRepository
 import com.example.foodmind.domain.repository.RegionRepository
+import com.example.foodmind.domain.repository.StoreRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -40,4 +42,10 @@ abstract class RepositoryModule {
     abstract fun bindRegionRepository(
         impl: RegionRepositoryImpl
     ): RegionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindStoreRepository(
+        impl: StoreRepositoryImpl
+    ): StoreRepository
 }

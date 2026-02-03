@@ -3,6 +3,8 @@ package com.example.foodmind.data.remote
 import com.example.foodmind.domain.model.Category
 import com.example.foodmind.domain.model.PriceQuote
 import com.example.foodmind.domain.model.Product
+import com.example.foodmind.domain.model.Store
+import com.example.foodmind.domain.model.StoreProductMapping
 import org.json.JSONArray
 import org.json.JSONObject
 import javax.inject.Inject
@@ -80,6 +82,7 @@ class SupabaseSyncManager @Inject constructor(
             payload.put(
                 JSONObject()
                     .put("product_id", quote.productId)
+                    .put("store_id", quote.storeId)
                     .put("region_key", quote.regionKey)
                     .put("currency", quote.currency)
                     .put("avg_price", quote.avgPrice)
@@ -88,6 +91,34 @@ class SupabaseSyncManager @Inject constructor(
                     .put("is_mock", quote.isMock)
             )
         }
-        service.upsert("price_quotes", payload, "product_id,region_key")
+        service.upsert("price_quotes", payload, "product_id,region_key,store_id")
+    }
+
+    suspend fun upsertStores(stores: List<Store>) {
+        if (stores.isEmpty() || !SupabaseConfig.isConfigured) return
+        val payload = JSONArray()
+        stores.forEach { store ->
+            payload.put(
+                JSONObject()
+                    .put("id", store.id)
+                    .put("name", store.name)
+                    .put("domain", store.domain)
+            )
+        }
+        service.upsert("stores", payload, "id")
+    }
+
+    suspend fun upsertStoreProductMappings(mappings: List<StoreProductMapping>) {
+        if (mappings.isEmpty() || !SupabaseConfig.isConfigured) return
+        val payload = JSONArray()
+        mappings.forEach { mapping ->
+            payload.put(
+                JSONObject()
+                    .put("store_id", mapping.storeId)
+                    .put("retailer_product_id", mapping.retailerProductId)
+                    .put("product_id", mapping.productId)
+            )
+        }
+        service.upsert("store_product_mappings", payload, "store_id,retailer_product_id")
     }
 }

@@ -63,6 +63,7 @@ fun ProductWithNutrition.toDomain(category: Category?): Product {
             val trimmed = tag.trim()
             if (trimmed.isBlank()) null else trimmed
         } ?: emptyList(),
+        source = product.source.toSource(),
         nutrition = nutrition?.toDomain(),
         createdAt = product.createdAt,
         updatedAt = product.updatedAt
@@ -78,6 +79,7 @@ fun Product.toEntity(categoryId: String?): ProductEntity {
         barcode = barcode,
         imageUrl = imageUrl,
         countryTags = if (countryTags.isEmpty()) null else countryTags.joinToString(","),
+        source = source.name,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -86,6 +88,7 @@ fun Product.toEntity(categoryId: String?): ProductEntity {
 fun PriceQuoteEntity.toDomain(): PriceQuote {
     return PriceQuote(
         productId = productId,
+        storeId = storeId,
         regionKey = regionKey,
         currency = currency,
         avgPrice = avgPrice,
@@ -98,6 +101,7 @@ fun PriceQuoteEntity.toDomain(): PriceQuote {
 fun PriceQuote.toEntity(): PriceQuoteEntity {
     return PriceQuoteEntity(
         productId = productId,
+        storeId = storeId ?: "unknown",
         regionKey = regionKey,
         currency = currency,
         avgPrice = avgPrice,
@@ -105,4 +109,9 @@ fun PriceQuote.toEntity(): PriceQuoteEntity {
         updatedAt = updatedAt,
         isMock = isMock
     )
+}
+
+private fun String.toSource(): Product.Source {
+    return Product.Source.entries.firstOrNull { it.name == this }
+        ?: Product.Source.OTHER
 }

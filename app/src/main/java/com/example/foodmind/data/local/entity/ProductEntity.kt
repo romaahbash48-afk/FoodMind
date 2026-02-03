@@ -19,6 +19,7 @@ data class ProductEntity(
     val barcode: String?,
     val imageUrl: String?,
     val countryTags: String?,
+    val source: String,
     val createdAt: Long,
     val updatedAt: Long
 )

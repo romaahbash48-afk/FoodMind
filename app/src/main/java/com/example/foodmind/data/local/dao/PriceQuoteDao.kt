@@ -13,6 +13,7 @@ interface PriceQuoteDao {
         """
         SELECT * FROM price_quotes
         WHERE productId = :productId AND regionKey = :regionKey
+        ORDER BY updatedAt DESC
         LIMIT 1
         """
     )

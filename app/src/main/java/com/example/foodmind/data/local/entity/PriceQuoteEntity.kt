@@ -4,10 +4,11 @@ import androidx.room.Entity
 
 @Entity(
     tableName = "price_quotes",
-    primaryKeys = ["productId", "regionKey"]
+    primaryKeys = ["productId", "regionKey", "storeId"]
 )
 data class PriceQuoteEntity(
     val productId: String,
+    val storeId: String,
     val regionKey: String,
     val currency: String,
     val avgPrice: Double,
