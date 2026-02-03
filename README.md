@@ -9,17 +9,19 @@ Local storage is **Room**, remote master is **Supabase** (optional).
 - Region selection (auto by coarse location or manual)
 - Product catalog with **search + category filters**
 - Product details: nutrition per 100g/ml + image
-- Regional price block with **"approximate (mock)"** label
+- Regional price block (shows **"no data"** if no legal source)
 - WorkManager background import pipeline
 - Room cache + Supabase sync (when keys provided)
 
-> Prices are mocked for now (clearly labeled) until a real price data source is added.
+> Prices are only displayed when a **legal source** is available.
 
 ---
 
 ## Data sources
 - **Open Food Facts** (products, nutrition, images, barcodes)
 - **Supabase** as master DB (optional, configured via `local.properties`)
+- **Retailers (DE)**: connectors are **NOT_ALLOWED** unless compliance gate says ALLOW
+  - See [COMPLIANCE.md](COMPLIANCE.md)
 
 ---
 
@@ -35,7 +37,6 @@ Create `local.properties` in the project root (do **not** commit):
 ```
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 SUPABASE_ANON_KEY=YOUR_ANON_KEY
-USE_MOCK_PRICES=true
 ```
 
 If `SUPABASE_*` keys are missing, the app runs **local-only** using Room.
@@ -57,7 +58,7 @@ On first region selection, a WorkManager job:
 2. Loads ~50 products per category (≈ 500 total)
 3. Normalizes nutrition to **per 100g / 100ml**
 4. Stores to **Room**, and upserts to **Supabase** if configured
-5. Seeds **mock prices** per region (labeled as mock)
+5. Prices are fetched only from **legal feeds** (none enabled by default)
 
 ---
 
@@ -82,8 +83,8 @@ app/
   navigation/      # Navigation Compose graph
   di/              # Hilt modules
 
-data-import/
-  Open Food Facts client + importer
+data-collectors/
+  Open Food Facts collector + retailer connectors
 ```
 
 ---

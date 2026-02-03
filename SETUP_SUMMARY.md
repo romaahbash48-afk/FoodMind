@@ -12,10 +12,14 @@
 - Local cache is the primary read source
 
 ### Import pipeline
-- **Open Food Facts** importer (`data-import` module)
+- **Open Food Facts** collector (`data-collectors` module)
 - WorkManager job for background import
 - Dedup by **barcode** or **name+brand** hash
 - Normalized nutrition per **100g / 100ml**
+
+### Compliance Gate
+- `COMPLIANCE.md` with robots.txt + ToS checks
+- Retailer connectors default to **NOT_ALLOWED**
 
 ### Supabase integration
 - REST upsert via PostgREST
@@ -25,8 +29,8 @@
 ### Region & Pricing
 - Region selection screen (auto coarse location or manual)
 - Region saved locally
-- Mock regional prices (clearly labeled as mock)
 - PriceQuote entity with `regionKey`, `currency`, `source`, `updatedAt`
+  - Prices are only shown when a **legal source** is enabled
 
 ### UI (Compose)
 - Region selection screen
@@ -50,7 +54,6 @@
 ```
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 SUPABASE_ANON_KEY=YOUR_ANON_KEY
-USE_MOCK_PRICES=true
 ```
 
 2. Build:
